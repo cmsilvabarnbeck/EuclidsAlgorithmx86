@@ -1,0 +1,191 @@
+Microsoft (R) Macro Assembler Version 14.29.30145.0	    06/09/22 09:48:06
+example.asm						     Page 1 - 1
+
+
+				; I have abided by the UNCG Academic Integrity Policy
+				; Author: Christopher Silva Barnbeck
+				; Date: 06/08/2022
+				; This program will prompt a user for the value of n and m and use a procedure to return the greatest common denominator where n and m are greater than 0.
+
+				INCLUDE io.h                            ; header file for input/output
+			      C ; IO.H -- header file for I/O macros (listing suppressed)
+			      C .NOLIST      ; turn off listing
+			      C .LIST        ; begin listing
+			      C 
+				.586
+				.MODEL FLAT
+				.STACK 4096
+
+ 00000000			.DATA
+
+ 00000000 00000000		n		    DWORD   ?
+ 00000004 00000000		m           DWORD   ?
+ 00000008 45 6E 74 65 72	prompt1		BYTE    "Enter value for n", 0
+	   20 76 61 6C 75
+	   65 20 66 6F 72
+	   20 6E 00
+ 0000001A 45 6E 74 65 72	prompt2     BYTE    "Enter value for m", 0
+	   20 76 61 6C 75
+	   65 20 66 6F 72
+	   20 6D 00
+ 0000002C  00000028 [		string		BYTE    40 DUP (?)
+	    00
+	   ]
+ 00000054 54 68 65 20 47	resultLbl	BYTE	"The GCD is", 0
+	   43 44 20 69 73
+	   00
+ 0000005F 49 6E 76 61 6C	invalid     BYTE    "Invalid procedure arguments!", 0
+	   69 64 20 70 72
+	   6F 63 65 64 75
+	   72 65 20 61 72
+	   67 75 6D 65 6E
+	   74 73 21 00
+ 0000007C  0000000B [		solution	DWORD   11 DUP (?), 0
+	    00000000
+	   ] 00000000
+
+ 00000000			.CODE
+ 00000000			_MainProc PROC
+				        input	prompt1, string, 40		; read ASCII characters
+				        atod    string					; convert to integer
+ 0000002D  A3 00000000 R	        mov     n, eax			        ; store in memory
+ 00000032  FF 35 00000000 R	        push    n                       ; push n to stack
+
+				        input	prompt2, string, 40		; read ASCII characters
+				        atod    string					; convert to integer
+ 00000065  8B D8		        mov     ebx, eax                ; store in ebx
+ 00000067  A3 00000004 R	        mov     m, eax			        ; store in memory
+ 0000006C  FF 35 00000004 R	        push    m                       ; push m to stack
+
+ 00000072  A1 00000000 R	        mov     eax, n                  ; reset eax to n
+ 00000077  83 F8 00		        cmp     eax, 0                  ; begin sanity check on n
+ 0000007A  7E 44		        jle     endWhile                ; less than or equal to 0 throws error
+ 0000007C  83 FB 00		        cmp     ebx, 0                  ; sanity check on m
+ 0000007F  7E 3F		        jle     endWhile                ; less than or equal to 0 throws error
+				      
+
+ 00000081  E8 0000005C		        call    gcd                     ; call gcd
+				        dtoa    solution, eax           ; Convert to ASCII 
+				        output  resultLbl, solution     ; output label and solution
+ 000000B7  83 C4 08		        add     esp, 8                  ; remove parameters
+ 000000BA  B8 00000000		        mov     eax, 0                  ; exit with return code 0
+ 000000BF  C3			        ret
+ 000000C0			endWhile:
+				        output  invalid, solution       ; invalid solution error
+ 000000D9  83 C4 08		        add     esp, 8                  ; remove parameters
+ 000000DC  B8 00000000		        mov     eax, 0                  ; exit with return code 0
+ 000000E1  C3			        ret
+
+ 000000E2			_MainProc ENDP
+
+				; Finds greatest common denominator using Euclid's algorithm
+				; int gcd(int m, int n)
+ 000000E2			gcd PROC
+ 000000E2  55			        push    ebp                     ; save ebp
+ 000000E3  8B EC		        mov     ebp, esp                ; establish stack frame
+ 000000E5  53			        push    ebx                     ; save ebx
+ 000000E6  52			        push    edx                     ; save edx
+				        
+ 000000E7  8B 45 08		        mov     eax, [ebp + 8]          ; n in eax
+ 000000EA  8B 5D 0C		        mov     ebx, [ebp + 12]         ; m in ebx
+
+ 000000ED			checkSwap:
+ 000000ED  3B C3		        cmp     eax, ebx                ; check to see if values are sorted
+ 000000EF  72 12		        jb      swap                    ; jump to swap if n < m
+
+ 000000F1			ngcd:
+ 000000F1  BA 00000000		        mov     edx, 0                  ; prep for division
+ 000000F6  F7 F3		        div     DWORD PTR ebx           ; divide by m
+ 000000F8  83 FA 00		        cmp     edx, 0                  ; compare remainder with 0
+ 000000FB  74 09		        je      endLoop                 ; jump when remainder 0, breaks loop
+ 000000FD  8B C3		        mov     eax, ebx                ; m to n
+ 000000FF  8B DA		        mov     ebx, edx                ; remainder to m
+ 00000101  EB EA		        jmp     checkSwap               ; repeat loop
+
+ 00000103			swap:
+ 00000103  93			        xchg    eax, ebx                ; swap eax and ebx
+ 00000104  EB E7		        jmp     checkSwap
+
+ 00000106			endLoop:
+ 00000106  8B C3		        mov     eax, ebx                ; final m value becomes solution, move to eax
+ 00000108  5A			        pop     edx                     ; exit code
+ 00000109  5B			        pop     ebx                     ; 
+ 0000010A  8B E5		        mov     esp, ebp                ; assurance for the correct return value :-)
+ 0000010C  5D			        pop     ebp                     ; restore ebp..now we are sure ESP points to return address
+				    
+ 0000010D  C3			        ret
+ 0000010E			gcd ENDP
+
+				END										; end of source code
+
+Microsoft (R) Macro Assembler Version 14.29.30145.0	    06/09/22 09:48:06
+example.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+atod . . . . . . . . . . . . . .	Proc
+atow . . . . . . . . . . . . . .	Proc
+dtoa . . . . . . . . . . . . . .	Proc
+input  . . . . . . . . . . . . .	Proc
+output . . . . . . . . . . . . .	Proc
+wtoa . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 000000AC Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000010E Para	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+_MainProc  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000E2 Public
+  endWhile . . . . . . . . . . .	L Near	 000000C0 _TEXT	
+gcd  . . . . . . . . . . . . . .	P Near	 000000E2 _TEXT	Length= 0000002C Public
+  checkSwap  . . . . . . . . . .	L Near	 000000ED _TEXT	
+  ngcd . . . . . . . . . . . . .	L Near	 000000F1 _TEXT	
+  swap . . . . . . . . . . . . .	L Near	 00000103 _TEXT	
+  endLoop  . . . . . . . . . . .	L Near	 00000106 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000000h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+_getInput  . . . . . . . . . . .	L Near	 00000000 External
+_showOutput  . . . . . . . . . .	L Near	 00000000 External
+atodproc . . . . . . . . . . . .	L Near	 00000000 External
+atowproc . . . . . . . . . . . .	L Near	 00000000 External
+dtoaproc . . . . . . . . . . . .	L Near	 00000000 External
+invalid  . . . . . . . . . . . .	Byte	 0000005F _DATA	
+m  . . . . . . . . . . . . . . .	DWord	 00000004 _DATA	
+n  . . . . . . . . . . . . . . .	DWord	 00000000 _DATA	
+prompt1  . . . . . . . . . . . .	Byte	 00000008 _DATA	
+prompt2  . . . . . . . . . . . .	Byte	 0000001A _DATA	
+resultLbl  . . . . . . . . . . .	Byte	 00000054 _DATA	
+solution . . . . . . . . . . . .	DWord	 0000007C _DATA	
+string . . . . . . . . . . . . .	Byte	 0000002C _DATA	
+wtoaproc . . . . . . . . . . . .	L Near	 00000000 External
+
+	   0 Warnings
+	   0 Errors
